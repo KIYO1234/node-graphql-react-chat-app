@@ -85,16 +85,22 @@ module.exports = {
     },
     Subscription: {
         newMessage: {
-            subscribe: withFilter((_, __, { pubsub, user }) => {
-                if (!user) return new AuthenticationError('Unauthenticated')
-                return pubsub.asyncIterator(['NEW_MESSAGE'])
-            }, ({ newMessage }, _, { user }) => {
-                if (newMessage.from === user.username || newMessage.to === user.username) {
-                    return true
-                } else {
+            subscribe: withFilter(
+                (_, __, { pubsub, user }) => {
+                    if (!user) throw new AuthenticationError('Unauthenticated')
+                    return pubsub.asyncIterator(['NEW_MESSAGE'])
+                },
+                ({ newMessage }, _, { user }) => {
+                    if (
+                        newMessage.from === user.username ||
+                        newMessage.to === user.username
+                    ) {
+                        return true
+                    }
+
                     return false
                 }
-            })
-        } 
-    }
+            ),
+        },
+    },
 }

@@ -43,7 +43,8 @@ const Login = (props) => {
             console.log('data.login', data.login)
             
             dispatch({ type: 'LOGIN', payload: data.login })
-            props.history.push('/')
+            // props.history.push('/')
+            window.location.href = '/'
         }
     });
 
