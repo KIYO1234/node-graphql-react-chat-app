@@ -11,12 +11,18 @@ const typeDefs = require('./graphql/typeDefs');
 // kind of handlers
 // hello という query（命令）に対して 'world' という文字列を返す
 const resolvers = require('./graphql/resolvers');
-
+const contextMiddleware = require('./util/contextMiddleware.js')
 // create ApolloServer instance
 const server = new ApolloServer({
     typeDefs,
     resolvers,
+    // context は全てのresolverで使う情報を定義する場所（tokenなど）
+    // context: (ctx) => ctx
+    // ▲をリファクタリングして▼に
+    context: contextMiddleware,
 });
+
+
 
 server.listen().then(({ url }) => {
     console.log(`🚀 Server ready at ${url}`);
