@@ -20,12 +20,15 @@ const server = new ApolloServer({
     // context: (ctx) => ctx
     // ▲をリファクタリングして▼に
     context: contextMiddleware,
+
+    subscriptions: { path: '/'}
 });
 
 
 
-server.listen().then(({ url }) => {
+server.listen().then(({ url, subscriptionsUrl }) => {
     console.log(`🚀 Server ready at ${url}`);
+    console.log(`🚀 Subscription ready at ${subscriptionsUrl}`);
 
     // connect to database after running server
     sequelize.authenticate()
