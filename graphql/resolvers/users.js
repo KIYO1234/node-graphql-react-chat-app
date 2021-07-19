@@ -1,7 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { UserInputError, AuthenticationError } = require('apollo-server');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../../config/env.json')
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 dayjs.extend(require('dayjs/plugin/timezone'))
@@ -92,7 +91,7 @@ module.exports = {
                 }
                 // jwt の作成
                 // JWT_SECRETが鍵
-                const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: 60 * 60 });
+                const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: 60 * 60 });
 
                 return {
                     ...user.toJSON(),

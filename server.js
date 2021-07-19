@@ -1,4 +1,7 @@
 const { ApolloServer } = require('apollo-server');
+
+require('dotenv').config()
+
 // import db instance (lower case)
 // { sequelize } は db.sequelizeをさす（models/index.js 34行目）
 const { sequelize } = require('./models');
