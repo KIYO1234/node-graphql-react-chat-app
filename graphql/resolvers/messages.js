@@ -1,4 +1,4 @@
-const { UserInputError, AuthenticationError, withFilter } = require('apollo-server');
+const { UserInputError, AuthenticationError, withFilter, ForbiddenError } = require('apollo-server');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 dayjs.extend(require('dayjs/plugin/timezone'))
@@ -8,7 +8,7 @@ dayjs.extend(utc);
 const { Op } = require('sequelize');
 // import User model (from ../models/user.js)
 // なんでrequire('../models'なのかは謎)
-const { Message, User } = require('../../models');
+const { Message, User, Reaction } = require('../../models');
 // const { PubSub } = require('graphql-subscriptions');
 
 
@@ -33,14 +33,15 @@ module.exports = {
                         from: { [Op.in]: usernames },
                         to: { [Op.in]: usernames },
                     },
-                    order: [['createdAt', 'DESC']]
+                    order: [['createdAt', 'DESC']],
+                    // include: [{ model: Reaction, as: 'reactions' }],
                 })
                 console.log('messages: ', messages)
                 
                 return messages
 
             } catch (err) {
-                console.log(err)
+                console.log('getMessages error', err)
                 throw err
             }
         }
@@ -81,6 +82,49 @@ module.exports = {
                 console.log(err)
                 throw err
             }
+        },
+
+        reactToMessage: async (_, { uuid, content }, { user, pubsub }) => {
+            const reactions = ['❤️', '😄', '😯', '😢', '😡', '👍', '👎']
+            try {
+                // Validate reaction content
+                if (!reactions.includes(content)) {
+                    throw new UserInputError('Invalid reaction')
+                }
+                // Get user
+                const username = user ? user.username : ''
+                user = await User.findOne({ where: { username } })
+                if (!user) throw new AuthenticationError('Unauthenticated')
+                
+                // Get message
+                const message = await Message.findOne({ where: { uuid } })
+                if (!message) throw new UserInputError('message not found')
+
+                if (message.from !== user.username && message.to !== user.username) {
+                    throw new ForbiddenError('Unauthorized')
+                }
+
+                let reaction = await Reaction.findOne({ where: { messageId: message.id, userId: user.id } })
+                
+                if (reaction) {
+                    // reaction exists, update it
+                    reaction.content = content
+                    await reaction.save()
+                } else {
+                    // reaction doesn't exists, create it 
+                    reaction = await Reaction.create({
+                        messageId: message.id,
+                        userId: user.id,
+                        content,
+                    })
+                }
+
+                pubsub.publish('NEW_REACTION', { newReaction: reaction })
+
+                return reaction
+            } catch (err) {
+                throw err
+            }
         }
     },
     Subscription: {
@@ -88,12 +132,31 @@ module.exports = {
             subscribe: withFilter(
                 (_, __, { pubsub, user }) => {
                     if (!user) throw new AuthenticationError('Unauthenticated')
-                    return pubsub.asyncIterator(['NEW_MESSAGE'])
+                    return pubsub.asyncIterator('NEW_MESSAGE')
                 },
                 ({ newMessage }, _, { user }) => {
                     if (
                         newMessage.from === user.username ||
                         newMessage.to === user.username
+                    ) {
+                        return true
+                    }
+
+                    return false
+                }
+            ),
+        },
+        newReaction: {
+            subscribe: withFilter(
+                (_, __, { pubsub, user }) => {
+                    if (!user) throw new AuthenticationError('Unauthenticated')
+                    return pubsub.asyncIterator('NEW_REACTION')
+                },
+                async ({ newReaction }, _, { user }) => {
+                    const message = await newReaction.getMessage()
+                    if (
+                        message.from === user.username ||
+                        message.to === user.username
                     ) {
                         return true
                     }

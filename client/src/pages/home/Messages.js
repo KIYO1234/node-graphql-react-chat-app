@@ -16,6 +16,9 @@ const GET_MESSAGES = gql`
     query getMessages($from: String!){
         getMessages(from: $from){
             uuid from to content createdAt
+            reactions{
+                uuid content
+            }
         }
     }
 `
@@ -24,9 +27,14 @@ const Messages = () => {
     const dispatch = useMessageDispatch()
     const [content, setContent] = useState('')
     const selectedUser = users?.find(u => u.selected === true)
+    // console.log('selectedUser: ', selectedUser)
+    
     const messages = selectedUser?.messages
+    console.log('messages: ', messages)
+    
 
     const [getMessages, { loading: messagesLoading, data: messagesData }] = useLazyQuery(GET_MESSAGES)
+    
 
     const [sendMessage] = useMutation(SEND_MESSAGE, {            
         onError: err => console.log(err)   

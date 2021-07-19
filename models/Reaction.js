@@ -3,19 +3,19 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Message extends Model {
+  class Reaction extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    
-    // static associate({ Reaction }) {
-    //   // define association here
-    //   this.hasMany(Reaction, { as: 'reactions' })
-    // }
+    static associate({ User, Message }) {
+      // define association here
+      this.belongsTo(Message, { foreignKey: 'messageId '})
+      this.belongsTo(User, { foreignKey: 'userId ' })
+    }
   };
-  Message.init({
+  Reaction.init({
     content: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -23,20 +23,19 @@ module.exports = (sequelize, DataTypes) => {
     uuid: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
+    },
+    messageId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
-    from: {
-      type: DataTypes.STRING,
+    userId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    to: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
+    }
   }, {
     sequelize,
-    modelName: 'Message',
-    tableName: 'messages',
+    modelName: 'Reaction',
+    tableName: 'reactions',
   });
-  return Message;
+  return Reaction;
 };

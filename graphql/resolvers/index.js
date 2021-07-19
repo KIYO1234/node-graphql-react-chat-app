@@ -7,6 +7,8 @@ dayjs.extend(require('dayjs/plugin/utc'))
 dayjs.tz.setDefault('Asia/Tokyo');
 dayjs.extend(utc);
 
+const { Message, User } = require('../../models')
+
 module.exports = {
     Message: {
         // createdAt: (parent) => {
@@ -22,6 +24,12 @@ module.exports = {
         //     parent.createdAt
         //     console.log('message parent createdAt: ', parent.createdAt)
         // }
+    },
+    Reaction: {
+        createdAt: () => dayjs.tz().format(),
+        message: async (parent) => await Message.findByPk(parent.messageId),
+        user: async (parent) => await User.findByPk(parent.userId, {
+            attributes: ['username', 'imageUrl', 'createdAt']}),
     },
     User: {
         createdAt: () => dayjs.tz().format()

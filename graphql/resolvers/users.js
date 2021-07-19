@@ -96,9 +96,9 @@ module.exports = {
 
                 return {
                     ...user.toJSON(),
-                    createdAt: dayjs.tz().format(),
+                    // createdAt: dayjs.tz().format(),
                     // createdAt: new Date().toISOString(),
-                    token
+                    token,
                 }
             } catch (err) {
                 console.log(err)
